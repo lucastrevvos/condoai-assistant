@@ -20,3 +20,4 @@ async def telegram_webhook(update: Update):
     await send_message(chat_id, f"Recebi: {text}")
 
     return {"ok": True}
+
