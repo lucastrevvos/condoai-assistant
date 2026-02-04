@@ -1,12 +1,12 @@
 from app.agents.intents import Intent
+from app.services.llm import classify_intent
 
 class RouterAgent:
     """
-    RouterAgent v1: roteamento por heurísticas (regras simples);
-    Uso heurística primeiro pra reduzir custo e latência, LLM só quando precisa.
+    RouterAgent v2: heurísticas primeiro, LLM fallback quando UNKNOWN.
     """
 
-    def route(self, text: str) -> Intent:
+    def route_by_rules(self, text: str) -> Intent:
         t = text.lower().strip()
 
         finance_keywords = ["boleto", "pagamento", "vencimento", "saldo", "taxa", "condomínio", "condominio"]
@@ -21,3 +21,20 @@ class RouterAgent:
             return Intent.SUPPORT
         
         return Intent.UNKNOWN
+    
+    async def route(self, text: str) -> Intent:
+        intent = self.route_by_rules(text)
+
+        if intent != Intent.UNKNOWN:
+            return intent
+        
+        label = await classify_intent(text)
+
+        mapping = {
+            "support": Intent.SUPPORT,
+            "finance": Intent.FINANCE,
+            "docs": Intent.DOCS,
+            "unknown": Intent.UNKNOWN
+        }
+
+        return mapping.get(label, Intent.UNKNOWN)

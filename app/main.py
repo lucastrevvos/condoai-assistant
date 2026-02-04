@@ -28,7 +28,7 @@ async def telegram_webhook(update: Update):
     chat_id = update.message.chat.id
     text = update.message.text.strip()
 
-    intent = router.route(text)
+    intent = await router.route(text)
 
     if intent == Intent.SUPPORT:
         reply = support_agent.handle(text)
@@ -42,7 +42,8 @@ async def telegram_webhook(update: Update):
             "Tenta perguntar sobre boletos/vencimentos ou documentos (ata, pdf, comunicado)"
         )
 
-    await send_message(chat_id, reply)
+    await send_message(chat_id, reply
+                       )
 
     return {"ok": True}
 
