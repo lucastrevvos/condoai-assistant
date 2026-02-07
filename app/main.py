@@ -38,8 +38,11 @@ async def telegram_webhook(update: Update):
         reply = docs_agent.handle(text)
     else:
         reply = (
-            "🤔 Não peguei ainda.\n"
-            "Tenta perguntar sobre boletos/vencimentos ou documentos (ata, pdf, comunicado)"
+            "🤔 Ainda tô aprendendo esse tipo de pedido.\n\n"
+            "Sugestões:\n"
+            "- 'meu boleto vence quando?'\n"
+            "- 'tenho um pdf da ata'\n"
+            "- 'faz um comunicado pros moradores'\n"
         )
 
     await send_message(chat_id, reply

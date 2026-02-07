@@ -1,6 +1,7 @@
+from app.services.tools import get_upcoming_bills, format_bills_message
+
 class FinanceAgent:
     def handle(self, text: str) -> str: 
-        return (
-            "💰 Entendi que é assunto financeiro.\n"
-            "Em breve vou consultar boletos/vencimentos no banco e te responder certinho"
-        )
+        # v1: sempre retorna boletos próximos
+        bills = get_upcoming_bills(days=7)
+        return format_bills_message(bills)

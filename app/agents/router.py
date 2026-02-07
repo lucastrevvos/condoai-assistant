@@ -10,8 +10,8 @@ class RouterAgent:
         t = text.lower().strip()
 
         finance_keywords = ["boleto", "pagamento", "vencimento", "saldo", "taxa", "condomínio", "condominio"]
-        docs_keywords = ["ata", "pdf", "documento", "anexo", "arquivo", "comunicado"]
-        support_keywords = ["ajuda", "como", "oi", "olá", "ola", "bom dia", "boa tarde", "boa noite"]
+        docs_keywords = ["ata", "pdf", "documento", "anexo", "arquivo"]
+        support_keywords = ["ajuda", "como", "oi", "olá", "ola", "bom dia", "boa tarde", "boa noite", "comunicado"]
 
         if any(k in t for k in finance_keywords):
             return Intent.FINANCE
