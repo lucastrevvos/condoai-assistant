@@ -9,6 +9,8 @@ from app.agents.support import SupportAgent
 from app.agents.finance import FinanceAgent
 from app.agents.docs import DocsAgent
 
+from app.infra.db import SessionLocal
+
 app = FastAPI(title="CondoAI Assitant", version="0.1.0")
 
 router = RouterAgent()
@@ -30,23 +32,25 @@ async def telegram_webhook(update: Update):
 
     intent = await router.route(text)
 
-    if intent == Intent.SUPPORT:
-        reply = support_agent.handle(text)
-    elif intent == Intent.FINANCE:
-        reply = finance_agent.handle(text)
-    elif intent == Intent.DOCS:
-        reply = docs_agent.handle(text)
-    else:
-        reply = (
-            "🤔 Ainda tô aprendendo esse tipo de pedido.\n\n"
-            "Sugestões:\n"
-            "- 'meu boleto vence quando?'\n"
-            "- 'tenho um pdf da ata'\n"
-            "- 'faz um comunicado pros moradores'\n"
-        )
+    db = SessionLocal()
+    try:
+        if intent == Intent.SUPPORT:
+            reply = support_agent.handle(text)
+        elif intent == Intent.FINANCE:
+            reply = finance_agent.handle(text, db=db)
+        elif intent == Intent.DOCS:
+            reply = docs_agent.handle(text)
+        else:
+            reply = (
+                "🤔 Ainda tô aprendendo esse tipo de pedido.\n\n"
+                "Sugestões:\n"
+                "- 'meu boleto vence quando?'\n"
+                "- 'tenho um pdf da ata'\n"
+                "- 'faz um comunicado pros moradores'\n"
+            )
+    finally:
+        db.close()
 
-    await send_message(chat_id, reply
-                       )
-
+    await send_message(chat_id, reply)
     return {"ok": True}
 

@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: condoai_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: condoai
+      POSTGRES_USER: condoai
+      POSTGRES_PASSWORD: condoai
+    ports:
+      - "5432:5432"
+    volumes:
+      - condoai_pgdata:/var/lib/postgresql/data
+
+volumes:
+  condoai_pgdata:

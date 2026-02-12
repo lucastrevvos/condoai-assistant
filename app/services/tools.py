@@ -1,16 +1,27 @@
 from datetime import date, timedelta
 from typing import List, Dict
+from sqlalchemy.orm import Session
 
-def get_upcoming_bills(days: int = 7) -> List[Dict]:
+from app.domain.models import Bill
+
+def get_upcoming_bills(db: Session, days: int = 7) -> List[Dict]:
     """
-    Tool v1 (mock): simula boletos a vencer.
-    Depois vira consulta real no Postgres.
+    Tool v2: consulta eral no Postgres
     """
 
     today = date.today()
+    limit_date = today + timedelta(days=days)
+
+    rows = (
+        db.query(Bill)
+        .filter(Bill.due_date >= today, Bill.due_date <= limit_date)
+        .order_by(Bill.due_date.asc())
+        .all()
+    )
+
     return [
-        {"id": "BLT-1001", "due_date": str(today + timedelta(days=2)), "amount": 420.50, "status": "open"},
-        {"id": "BLT-1002", "due_date": str(today + timedelta(days=5)), "amount": 199.90, "status": "open"},
+        {"id": r.id, "due_date": str(r.due_date), "amount": float(r.amount), "status": r.status}
+        for r in rows
     ]
 
 def format_bills_message(bills: List[Dict]) -> str:
