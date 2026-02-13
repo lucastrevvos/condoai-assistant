@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi import UploadFile, File
+from app.services.storage import upload_file_to_s3
 from app.telegram.schemas import Update
 from app.telegram.client import send_message
 
@@ -21,6 +23,17 @@ docs_agent = DocsAgent()
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    data = await file.read()
+
+    result = upload_file_to_s3(
+        filename=file.filename,
+        content_type=file.content_type or "application/octet-stream",
+        data=data
+    )
+    return {"ok": True, "file": {"filename": file.filename, **result}}
 
 @app.post("/webhook/telegram")
 async def telegram_webhook(update: Update):
