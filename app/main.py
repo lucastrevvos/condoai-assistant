@@ -4,6 +4,8 @@ from app.services.storage import upload_file_to_s3
 from app.telegram.schemas import Update
 from app.telegram.client import send_message
 
+from app.services.queue import enqueue_document_job
+
 
 from app.agents.router import RouterAgent
 from app.agents.intents import Intent
@@ -33,7 +35,15 @@ async def upload(file: UploadFile = File(...)):
         content_type=file.content_type or "application/octet-stream",
         data=data
     )
-    return {"ok": True, "file": {"filename": file.filename, **result}}
+
+    job = enqueue_document_job({
+        "type": "document_uploaded",
+        "bucket": result["bucket"],
+        "key": result["key"],
+        "filename": file.filename
+    })
+
+    return {"ok": True, "file": {"filename": file.filename, **result}, "job": job}
 
 @app.post("/webhook/telegram")
 async def telegram_webhook(update: Update):
