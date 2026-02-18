@@ -1,11 +1,11 @@
-from fastapi import FastAPI
-from fastapi import UploadFile, File
+import uuid
+from sqlalchemy.orm import Session
+from fastapi import FastAPI, UploadFile, File
 from app.services.storage import upload_file_to_s3
 from app.telegram.schemas import Update
 from app.telegram.client import send_message
 
 from app.services.queue import enqueue_document_job
-
 
 from app.agents.router import RouterAgent
 from app.agents.intents import Intent
@@ -14,6 +14,8 @@ from app.agents.finance import FinanceAgent
 from app.agents.docs import DocsAgent
 
 from app.infra.db import SessionLocal
+
+from app.domain.models import Document
 
 app = FastAPI(title="CondoAI Assitant", version="0.1.0")
 
@@ -27,23 +29,41 @@ def health():
     return {"status": "ok"}
 
 @app.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(chat_id: str, file: UploadFile = File(...)):
     data = await file.read()
 
+    # 1) S3
     result = upload_file_to_s3(
         filename=file.filename,
         content_type=file.content_type or "application/octet-stream",
         data=data
     )
 
+    # 2) DB: cria registro
+    document_id = str(uuid.uuid4())
+    db: Session = SessionLocal()
+
+    try:
+        doc = Document(
+            id=document_id,
+            chat_id=str(chat_id),
+            bucket=result["bucket"],
+            key=result["key"],
+            filename=file.filename,
+            status="queued"
+        )
+        db.add(doc)
+        db.commit()
+    finally:
+        db.close()
+
+    # 3) SQS: enfileira
     job = enqueue_document_job({
         "type": "document_uploaded",
-        "bucket": result["bucket"],
-        "key": result["key"],
-        "filename": file.filename
+        "document_id": document_id
     })
 
-    return {"ok": True, "file": {"filename": file.filename, **result}, "job": job}
+    return {"ok": True, "document_id": document_id, "job": job}
 
 @app.post("/webhook/telegram")
 async def telegram_webhook(update: Update):
